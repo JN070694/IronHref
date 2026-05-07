@@ -5,6 +5,7 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -28,6 +29,7 @@ class MainActivity : AppCompatActivity() {
         val recyclerView = findViewById<RecyclerView>(R.id.recyclerView)
         val btnAdd = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnAdd)
         val btnImport = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.btnImport)
+        val btnLaunchBrowser = findViewById<Button>(R.id.btnLaunchBrowser)
 
         adapter = UrlAdapter(
             dbHelper.getAllUrls().toMutableList(),
@@ -40,6 +42,13 @@ class MainActivity : AppCompatActivity() {
 
         btnAdd.setOnClickListener { showAddDialog() }
         btnImport.setOnClickListener { openFilePicker() }
+        btnLaunchBrowser.setOnClickListener { launchBrowser() }
+    }
+
+    private fun launchBrowser() {
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://"))
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        startActivity(intent)
     }
 
     private fun openUrl(url: String) {
