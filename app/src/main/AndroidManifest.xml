@@ -11,7 +11,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:label="IronHref"
+        android:label="IronReference"
         android:supportsRtl="true"
         android:theme="@style/Theme.IronHref"
         tools:targetApi="31">

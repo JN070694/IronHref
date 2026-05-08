@@ -48,6 +48,10 @@ class UrlDatabaseHelper(context: Context) :
         writableDatabase.delete(TABLE_NAME, "$COL_ID = ?", arrayOf(id.toString()))
     }
 
+    fun deleteAllUrls() {
+        writableDatabase.delete(TABLE_NAME, null, null)
+    }
+
     fun getAllUrls(): List<UrlEntry> {
         val list = mutableListOf<UrlEntry>()
         val cursor = readableDatabase.query(

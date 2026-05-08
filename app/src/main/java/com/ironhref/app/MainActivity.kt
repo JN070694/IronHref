@@ -1,14 +1,17 @@
 package com.ironhref.app
 
-import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.net.toUri
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import java.io.BufferedReader
@@ -18,7 +21,12 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var dbHelper: UrlDatabaseHelper
     private lateinit var adapter: UrlAdapter
-    private val IMPORT_REQUEST_CODE = 1001
+
+    private val importLauncher = registerForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let { importFromFile(it) }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,14 +49,59 @@ class MainActivity : AppCompatActivity() {
         recyclerView.adapter = adapter
 
         btnAdd.setOnClickListener { showAddDialog() }
-        btnImport.setOnClickListener { openFilePicker() }
+        btnImport.setOnClickListener { importLauncher.launch("*/*") }
         btnLaunchBrowser.setOnClickListener { launchBrowser() }
     }
 
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menu.add(Menu.NONE, 1, Menu.NONE, "Delete All").apply {
+            setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+            icon = getDrawable(android.R.drawable.ic_menu_delete)
+        }
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            1 -> {
+                confirmDeleteAll()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    private fun confirmDeleteAll() {
+        AlertDialog.Builder(this)
+            .setTitle("Delete All URLs")
+            .setMessage("This will permanently remove all saved URLs. Are you sure?")
+            .setPositiveButton("Delete All") { _, _ ->
+                dbHelper.deleteAllUrls()
+                refreshList()
+                Toast.makeText(this, "All URLs deleted", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
     private fun launchBrowser() {
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://"))
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        startActivity(intent)
+        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://"))
+        val resolveInfo = packageManager.resolveActivity(browserIntent, 0)
+        val browserPackage = resolveInfo?.activityInfo?.packageName
+
+        if (browserPackage != null) {
+            val launchIntent = packageManager.getLaunchIntentForPackage(browserPackage)
+            if (launchIntent != null) {
+                launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(launchIntent)
+                return
+            }
+        }
+        // Fallback if package resolution fails
+        startActivity(Intent(Intent.ACTION_MAIN).apply {
+            addCategory(Intent.CATEGORY_APP_BROWSER)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        })
     }
 
     private fun openUrl(url: String) {
@@ -57,7 +110,7 @@ class MainActivity : AppCompatActivity() {
         } else {
             "https://$url"
         }
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(fullUrl))
+        val intent = Intent(Intent.ACTION_VIEW, fullUrl.toUri())
         startActivity(intent)
     }
 
@@ -93,21 +146,6 @@ class MainActivity : AppCompatActivity() {
             }
             .setNegativeButton("Cancel", null)
             .show()
-    }
-
-    private fun openFilePicker() {
-        val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
-            type = "*/*"
-            addCategory(Intent.CATEGORY_OPENABLE)
-        }
-        startActivityForResult(intent, IMPORT_REQUEST_CODE)
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == IMPORT_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
-            data?.data?.let { uri -> importFromFile(uri) }
-        }
     }
 
     private fun importFromFile(uri: Uri) {

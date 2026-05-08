@@ -6,6 +6,7 @@
         <item name="colorSecondary">@color/ironhref_purple</item>
         <item name="colorSecondaryVariant">@color/ironhref_purple_dark</item>
         <item name="colorOnSecondary">@color/white</item>
+        <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
         <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
     </style>
 </resources>
