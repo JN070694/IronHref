@@ -1,4 +1,4 @@
-# URLVault
+# IronHref
 
 A simple, ad-free Android app to store and open URLs. Tap a URL to open it in your default browser.
 
@@ -46,4 +46,4 @@ https://google.com
 - File access is requested at runtime only when you choose to import
 
 ## License
-MIT
+GPLv3
